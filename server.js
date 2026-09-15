@@ -11,6 +11,10 @@ connectDB();
 // middleware para poder leer los datos que nos envian desde el front JSON  del body de las peticiones
 app.use(express.json());
 
+// Rutas de autenticación
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes);
+
 //Rutas de prueba
 app.get('/', (req, res)=>{
     res.send('Servidor funcionando correctamente');
