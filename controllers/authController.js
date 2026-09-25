@@ -2,10 +2,11 @@
 
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 
 //funcion registrar usuario bcryptjs para encriptar la contraseña y guardarla en la base de datos
-const registerUser = async (req, res) => {
+const registrarUsuario = async (req, res) => {
     try {
          const { username, email, password } = req.body;
        
@@ -49,4 +50,56 @@ const registerUser = async (req, res) => {
     }
 };
 
-module.exports = {registrarUsuario};
+const loginUsuario = async (req, res) => {
+ 
+try{
+   //sacar email y password del body 
+   const {email, password} = req.body;
+
+   //2. validacion basica
+   if(!email || !password){
+      return res.status(400).json({mensaje: 'Email y contraseña son obligatorio'});
+   }
+
+   //3. Buscar el usuario
+const usuario = await User.findOne({ email });
+
+
+if(!usuario){
+return res.status(400).json({mensaje: 'Credenciales invalidas'});
+}
+
+// 4. Comparar la contraseña ingresada con el hash guardado
+const passwordCorrecta = await bcrypt.compare(password, usuario.password);
+
+if(!passwordCorrecta){
+   return res.status(400).json({mensaje: 'Credenciales invalidas'})
+}
+
+//5. Generar el token JWT
+const token = jwt.sign(
+   {id: usuario._id, role: usuario.role},
+   process.env.JWT_SECRET,
+   {expiresIn: '1h'}
+);
+
+//6. Responder con el toekn
+
+res.status(200).json({
+   mensaje: 'Login exitoso',
+   token,
+   usuario: {
+      id: usuario._id,
+      username: usuario.username,
+      email: usuario.email,
+      role: usuario.role
+   },
+});
+}catch(error){
+   console.error('Error al iniciar sesion:', error);
+   res.status(500).json({mensaje:'Error del servidor'});
+}
+}
+
+
+module.exports = {registrarUsuario, loginUsuario};
