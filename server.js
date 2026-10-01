@@ -20,7 +20,11 @@ app.get('/', (req, res)=>{
     res.send('Servidor funcionando correctamente');
 });
 
+// Rutas de usuario
+app.use('/api/usuarios', require('./routes/userRoutes'));
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+
