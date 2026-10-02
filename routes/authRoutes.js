@@ -24,16 +24,15 @@ router.get('/google/callback',
             { expiresIn: '1h' }
         );
 
-        res.json({
-            mensaje: 'Login con Google exitoso',
-            token,
-            usuario: {
-                id: req.user._id,
-                username: req.user.username,
-                email: req.user.email,
-                role: req.user.role,
-            },
-        });
+        // En vez de responder JSON, redirigimos al dashboard con los datos en la URL
+        const usuario = encodeURIComponent(JSON.stringify({
+            id: req.user._id,
+            username: req.user.username,
+            email: req.user.email,
+            role: req.user.role,
+        }));
+
+        res.redirect(`/dashboard.html?token=${token}&usuario=${usuario}`);
     }
 );
 
