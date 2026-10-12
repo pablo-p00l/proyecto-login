@@ -192,3 +192,9 @@ body {
   background-color: rgba(224, 122, 107, 0.12);
   color: var(--danger);
 }
+.auth-hint {
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}

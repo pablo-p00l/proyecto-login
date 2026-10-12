@@ -4,10 +4,19 @@ const router = express.Router();
 const { registrarUsuario, loginUsuario } = require('../controllers/authController');
 const passport = require('../config/passport');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
+
+const limiteAuth = rateLimit({
+    windowMs: 15 * 60 * 1000, // ventana de 15 minutos
+    limit: 10,                // 10 intentos por IP en esa ventana
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { mensaje: 'Demasiados intentos. Probá de nuevo en unos minutos.' },
+});
 
 // Ruta de registro de usuario
-router.post('/register', registrarUsuario);
-router.post('/login', loginUsuario);
+router.post('/register', limiteAuth, registrarUsuario);
+router.post('/login', limiteAuth, loginUsuario);
 
 // Paso 1: redirige a Google
 router.get('/google',

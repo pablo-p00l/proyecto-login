@@ -3,37 +3,50 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
+const emailValido = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 //funcion registrar usuario bcryptjs para encriptar la contraseña y guardarla en la base de datos
 const registrarUsuario = async (req, res) => {
     try {
-         const { username, email, password } = req.body;
-       
-         
-         // 1. validacion  basica de los campos
-         if(!username || !email || !password){
-            return res.status(400).json({mensaje: "Todos los campos son obligatorios"})
-         }
-         //2 verificar si el usuario ya existe (por email o username)
-          const usuarioExistente = await User.findOne ({ $or: [{email}, {username}] });
-         if (usuarioExistente){
-            return res.status(400).json({mensaje: 'El usuario ya existe o el email ya esta registrado'});
-         }
-         //3 encriptar la contraseña
-         const saltRounds = 10;
-         const passwordHasheada = await bcrypt.hash(password, saltRounds);
+        const { username, email, password } = req.body;
 
-         //4 Crear el Usuario con el hash, no la contraseña original
+        // 1. Tipos: tienen que ser strings, no objetos ni arrays
+        if (typeof username !== 'string' || typeof email !== 'string' || typeof password !== 'string') {
+            return res.status(400).json({ mensaje: 'Datos inválidos' });
+        }
 
-         const nuevoUsuario =  await User.create({
-            username,
-            email,
+        const usernameLimpio = username.trim();
+        const emailLimpio = email.trim().toLowerCase();
+
+        // 2. Formato y largo
+        if (usernameLimpio.length < 3) {
+            return res.status(400).json({ mensaje: 'El usuario debe tener al menos 3 caracteres' });
+        }
+        if (!emailValido(emailLimpio)) {
+            return res.status(400).json({ mensaje: 'El email no es válido' });
+        }
+        if (password.length < 8 || password.length > 72) {
+            return res.status(400).json({ mensaje: 'La contraseña debe tener entre 8 y 72 caracteres' });
+        }
+
+        // 3. Duplicados
+        const usuarioExistente = await User.findOne({
+            $or: [{ email: emailLimpio }, { username: usernameLimpio }]
+        });
+        if (usuarioExistente) {
+            return res.status(400).json({ mensaje: 'El usuario ya existe o el email ya está registrado' });
+        }
+
+        // 4. Hash y creación
+        const passwordHasheada = await bcrypt.hash(password, 10);
+
+        const nuevoUsuario = await User.create({
+            username: usernameLimpio,
+            email: emailLimpio,
             password: passwordHasheada,
-         });
-         //5 responder con el usuario creado (sin la contraseña)
+        });
 
-         res.status(201).json({
+        res.status(201).json({
             mensaje: 'Usuario registrado correctamente',
             usuario: {
                 id: nuevoUsuario._id,
@@ -41,12 +54,11 @@ const registrarUsuario = async (req, res) => {
                 email: nuevoUsuario.email,
                 role: nuevoUsuario.role,
             },
-         });
+        });
 
-    } catch (error){
-        console.log('Error al registrar usuario', error.message);
-        res.status(500).json({mensaje: 'Error del servidor'});
-
+    } catch (error) {
+        console.error('Error al registrar usuario:', error.message);
+        res.status(500).json({ mensaje: 'Error del servidor' });
     }
 };
 
@@ -54,19 +66,16 @@ const loginUsuario = async (req, res) => {
  
 try{
    //sacar email y password del body 
-   const {email, password} = req.body;
+ const { email, password } = req.body;
 
-   //2. validacion basica
-   if(!email || !password){
-      return res.status(400).json({mensaje: 'Email y contraseña son obligatorio'});
-   }
+if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
+    return res.status(400).json({ mensaje: 'Email y contraseña son obligatorios' });
+}
 
-   //3. Buscar el usuario
-const usuario = await User.findOne({ email });
+const usuario = await User.findOne({ email: email.trim().toLowerCase() });
 
-
-if(!usuario){
-return res.status(400).json({mensaje: 'Credenciales invalidas'});
+if (!usuario || !usuario.password) {
+    return res.status(400).json({ mensaje: 'Credenciales inválidas' });
 }
 
 // 4. Comparar la contraseña ingresada con el hash guardado
