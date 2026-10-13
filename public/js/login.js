@@ -1,3 +1,10 @@
+// Si volvemos de un login con Google fallido o cancelado, avisamos
+const params = new URLSearchParams(window.location.search);
+if (params.get('error') === 'google') {
+    mostrarMensaje('No se pudo iniciar sesión con Google. Probá de nuevo.', 'error');
+    window.history.replaceState({}, document.title, '/login.html');
+}
+
 document.getElementById('formLogin').addEventListener('submit', async (e) => {
     e.preventDefault();
 

@@ -25,7 +25,7 @@ router.get('/google',
 
 // Paso 2: Google redirige acá después de que el usuario acepta
 router.get('/google/callback',
-    passport.authenticate('google', { session: false, failureRedirect: '/login-fallido' }),
+    passport.authenticate('google', { session: false, failureRedirect: '/login.html?error=google' }),
     (req, res) => {
         const token = jwt.sign(
             { id: req.user._id, role: req.user.role },
