@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const connectDB = require('./config/db');
 
 const app = express();
+// Configuramos la app para que confíe en el proxy (si estás detrás de uno)
 app.set('trust proxy', 1);
 
 // conectamos la base de datos
