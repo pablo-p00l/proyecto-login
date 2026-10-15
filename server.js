@@ -1,26 +1,46 @@
-// Server.js created by Pablo-p00l
+
+/* Server.js created by Pablo-p00l */
+
 require('dotenv').config();
+
 const express = require('express');
 const helmet = require('helmet');
+const path = require('path');
 const connectDB = require('./config/db');
 
 const app = express();
-// Configuramos la app para que confíe en el proxy (si estás detrás de uno)
+
+// Configuración del proxy de Render
 app.set('trust proxy', 1);
 
-// conectamos la base de datos
+// Conexión con MongoDB
 connectDB();
 
-// headers de seguridad
+// Headers de seguridad
 app.use(helmet());
 
-// Rutas de public carpeta
-app.use(express.static('public'));
-
-// middleware para poder leer JSON del body de las peticiones
+// Middleware para leer JSON
 app.use(express.json());
 
-// Importamos y configuramos passport
+// Servir archivos estáticos de public
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Página principal: login
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+// Página de login
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+// Página de registro
+app.get('/register', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+// Inicializar Passport
 const passport = require('./config/passport');
 app.use(passport.initialize());
 
@@ -28,10 +48,12 @@ app.use(passport.initialize());
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
-// Rutas de usuario
+// Rutas de usuarios
 app.use('/api/usuarios', require('./routes/userRoutes'));
 
+// Iniciar servidor
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
